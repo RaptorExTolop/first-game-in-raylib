@@ -1,6 +1,10 @@
 package main
 
-import rl "github.com/gen2brain/raylib-go/raylib"
+import (
+	"fmt"
+
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 const (
 	screenWidth  = 1280
@@ -12,12 +16,16 @@ var (
 	running     = true
 	bkgcolour   = rl.NewColor(147, 211, 196, 255)
 	grassSprite rl.Texture2D
+	frameCount  int
 
 	// player vars
-	playerSprite rl.Texture2D
-	playerSrc    rl.Rectangle
-	playerDest   rl.Rectangle
-	playerSpeed  float32 = 3
+	playerSprite                                  rl.Texture2D
+	playerSrc                                     rl.Rectangle
+	playerDest                                    rl.Rectangle
+	playerSpeed                                   float32 = 3
+	playerMoving                                  bool
+	playerDir, playerFrame                        int
+	playerUp, playerDown, playerRight, playerLeft bool
 
 	// music vars
 	musicPaused bool
@@ -33,18 +41,26 @@ func drawScene() {
 }
 
 func input() {
-	// movement
+	// movement input
 	if rl.IsKeyDown(rl.KeyW) || rl.IsKeyDown(rl.KeyUp) {
-		playerDest.Y -= playerSpeed
+		playerMoving = true
+		playerUp = true
+		playerDir = 1 // for animation framesy value
 	}
 	if rl.IsKeyDown(rl.KeyS) || rl.IsKeyDown(rl.KeyDown) {
-		playerDest.Y += playerSpeed
+		playerMoving = true
+		playerDown = true
+		playerDir = 0 // for animation frames y value
 	}
 	if rl.IsKeyDown(rl.KeyA) || rl.IsKeyDown(rl.KeyLeft) {
-		playerDest.X -= playerSpeed
+		playerMoving = true
+		playerLeft = true
+		playerDir = 2 // for animation frames y value
 	}
 	if rl.IsKeyDown(rl.KeyD) || rl.IsKeyDown(rl.KeyRight) {
-		playerDest.X += playerSpeed
+		playerMoving = true
+		playerRight = true
+		playerDir = 3 // for animation frames y value
 	}
 	// debugging
 	if rl.IsKeyPressed(rl.KeyQ) {
@@ -56,6 +72,35 @@ func update() {
 	// should close window
 	running = !rl.WindowShouldClose()
 
+	// player movement & animation
+	playerSrc.X = 0 // for animation, if the player isn't moving stay at default frame in animation
+	if playerMoving {
+		if playerUp {
+			playerDest.Y -= playerSpeed
+		}
+		if playerDown {
+			playerDest.Y += playerSpeed
+		}
+		if playerLeft {
+			playerDest.X -= playerSpeed
+		}
+		if playerRight {
+			playerDest.X += playerSpeed
+		}
+		if frameCount%8 == 1 {
+			playerFrame++
+		}
+		playerSrc.X = playerSrc.Width * float32(playerFrame) // animation stuff teehee
+	}
+
+	frameCount++
+
+	if playerFrame > 3 {
+		playerFrame = 0
+	}
+
+	playerSrc.Y = playerSrc.Height * float32(playerDir)
+
 	// bkg music
 	rl.UpdateMusicStream(music) // update the music sound
 	if musicPaused {
@@ -64,8 +109,12 @@ func update() {
 		rl.ResumeMusicStream(music)
 	} // pauses music based of off input
 
+	fmt.Println(frameCount)
+
 	// camera
 	cam.Target = rl.NewVector2(float32(playerDest.X-(playerDest.Width/2)), float32(playerDest.Y-(playerDest.Height/2)))
+	playerMoving = false
+	playerUp, playerDown, playerLeft, playerRight = false, false, false, false
 }
 
 func render() {
