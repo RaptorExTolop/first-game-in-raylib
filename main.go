@@ -73,7 +73,7 @@ func update() {
 	running = !rl.WindowShouldClose()
 
 	// player movement & animation
-	playerSrc.X = 0 // for animation, if the player isn't moving stay at default frame in animation
+	playerSrc.X = playerSrc.Width * float32(playerFrame) // animation stuff teehee
 	if playerMoving {
 		if playerUp {
 			playerDest.Y -= playerSpeed
@@ -90,7 +90,8 @@ func update() {
 		if frameCount%8 == 1 {
 			playerFrame++
 		}
-		playerSrc.X = playerSrc.Width * float32(playerFrame) // animation stuff teehee
+	} else if frameCount%45 == 1 {
+		playerFrame++
 	}
 
 	frameCount++
@@ -98,6 +99,12 @@ func update() {
 	if playerFrame > 3 {
 		playerFrame = 0
 	}
+
+	if !playerMoving && playerFrame > 1 {
+		playerFrame = 0
+	}
+
+	playerSrc.X = playerSrc.Width * float32(playerFrame)
 
 	playerSrc.Y = playerSrc.Height * float32(playerDir)
 
