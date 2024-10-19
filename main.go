@@ -22,6 +22,9 @@ var (
 	// music vars
 	musicPaused bool
 	music       rl.Music
+
+	// camera
+	cam rl.Camera2D
 )
 
 func drawScene() {
@@ -49,15 +52,6 @@ func input() {
 	}
 }
 
-func render() {
-	rl.BeginDrawing()
-
-	rl.ClearBackground(bkgcolour)
-	drawScene()
-
-	rl.EndDrawing()
-}
-
 func update() {
 	// should close window
 	running = !rl.WindowShouldClose()
@@ -69,6 +63,20 @@ func update() {
 	} else {
 		rl.ResumeMusicStream(music)
 	} // pauses music based of off input
+
+	// camera
+	cam.Target = rl.NewVector2(float32(playerDest.X-(playerDest.Width/2)), float32(playerDest.Y-(playerDest.Height/2)))
+}
+
+func render() {
+	rl.BeginDrawing()
+
+	rl.ClearBackground(bkgcolour)
+	rl.BeginMode2D(cam)
+	drawScene()
+
+	rl.EndMode2D()
+	rl.EndDrawing()
 }
 
 func init() {
@@ -90,6 +98,9 @@ func init() {
 	musicPaused = false                                                                    // makes sure musicPaused if false so music starts playing
 	rl.PlayMusicStream(music)
 	rl.SetMusicVolume(music, 0.1) // sets volume for music
+
+	// camera init
+	cam = rl.NewCamera2D(rl.NewVector2(float32(screenWidth/2), float32(screenheight/2)), rl.NewVector2(float32(playerDest.X-(playerDest.Width/2)), float32(playerDest.Y-(playerDest.Height/2))), 0, 1.5)
 }
 
 func quit() {
