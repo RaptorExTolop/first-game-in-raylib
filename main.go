@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -13,10 +16,17 @@ const (
 
 var (
 	// uncategorised
-	running     = true
+	running    = true
+	frameCount int
+
+	tileDest   rl.Rectangle
+	tileSrc    rl.Rectangle
+	tilemap    []int
+	srcMap     []string
+	mapW, mapH int
+
 	bkgcolour   = rl.NewColor(147, 211, 196, 255)
 	grassSprite rl.Texture2D
-	frameCount  int
 
 	// player vars
 	playerSprite                                  rl.Texture2D
@@ -36,7 +46,17 @@ var (
 )
 
 func drawScene() {
-	rl.DrawTexture(grassSprite, 100, 50, rl.White)
+	///rl.DrawTexture(grassSprite, 100, 50, rl.White)
+
+	for i := 0; i < len(tilemap); i++ {
+		if tilemap[i] != 0 {
+			tileDest.X = tileDest.Width * float32(i%mapW)
+			tileDest.Y = tileDest.Height * float32(i/mapW)
+			tileSrc.X = tileSrc.Width * float32((tilemap[i]-1)%int(grassSprite.Width/int32(tileSrc.Width)))
+		}
+		tileSrc.Y = tileSrc.Height * float32((tilemap[i]-1)/int(grassSprite.Width))
+		rl.DrawTexturePro(grassSprite, tileSrc, tileDest, rl.NewVector2(tileDest.Width, tileDest.Height), 0, rl.White)
+	}
 	rl.DrawTexturePro(playerSprite, playerSrc, playerDest, rl.NewVector2(playerDest.Width, playerDest.Height), 0, rl.White)
 }
 
@@ -116,8 +136,6 @@ func update() {
 		rl.ResumeMusicStream(music)
 	} // pauses music based of off input
 
-	fmt.Println(frameCount)
-
 	// camera
 	cam.Target = rl.NewVector2(float32(playerDest.X-(playerDest.Width/2)), float32(playerDest.Y-(playerDest.Height/2)))
 	playerMoving = false
@@ -135,10 +153,44 @@ func render() {
 	rl.EndDrawing()
 }
 
+func loadmap(mapfile string) {
+	file, err := os.ReadFile(mapfile)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	removeNewLines := strings.Replace(string(file), "\n", " ", -1)
+	sliced := strings.Split(removeNewLines, " ")
+	mapW = -1
+	mapH = -1
+	for i := 0; i < len(sliced); i++ {
+		s, _ := strconv.ParseInt(sliced[i], 10, 64)
+		m := int(s)
+		if mapW == -1 {
+			mapW = m
+		} else if mapH == -1 {
+			mapH = m
+		} else {
+			tilemap = append(tilemap, m)
+		}
+	}
+	if len(tilemap) > mapW*mapH {
+		tilemap = tilemap[:len(tilemap)-1]
+	}
+
+	/*mapW, mapH = 5, 5
+	for i := 0; i < (mapW * mapH); i++ {
+		tilemap = append(tilemap, 1)
+	}*/
+}
+
 func init() {
 	rl.InitWindow(screenWidth, screenheight, "first game using raylib & go")
 	rl.SetExitKey(0)
 	rl.SetTargetFPS(60)
+
+	tileDest = rl.NewRectangle(0, 0, 16, 16)
+	tileSrc = rl.NewRectangle(0, 0, 16, 16)
 
 	// texture/sprite loading
 	grassSprite = rl.LoadTexture("sproutLandsPack/Tilesets/Grass.png")
@@ -157,6 +209,7 @@ func init() {
 
 	// camera init
 	cam = rl.NewCamera2D(rl.NewVector2(float32(screenWidth/2), float32(screenheight/2)), rl.NewVector2(float32(playerDest.X-(playerDest.Width/2)), float32(playerDest.Y-(playerDest.Height/2))), 0, 1.5)
+	loadmap("one.map")
 }
 
 func quit() {
