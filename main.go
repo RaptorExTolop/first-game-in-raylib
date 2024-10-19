@@ -7,7 +7,10 @@ const (
 	screenheight = 720
 )
 
-var ()
+var (
+	running   = true
+	bkgcolour = rl.NewColor(147, 211, 196, 255)
+)
 
 func drawScene() {}
 
@@ -16,24 +19,32 @@ func input() {}
 func render() {
 	rl.BeginDrawing()
 
-	rl.ClearBackground(rl.RayWhite)
-
+	rl.ClearBackground(bkgcolour)
 	drawScene()
 
 	rl.EndDrawing()
 }
 
-func update() {}
+func update() {
+	running = !rl.WindowShouldClose()
+}
+
+func init() {
+	rl.InitWindow(screenWidth, screenheight, "first game using raylib & go")
+	rl.SetExitKey(0)
+	rl.SetTargetFPS(60)
+}
+
+func quit() {
+	rl.CloseWindow()
+}
 
 func main() {
-	rl.InitWindow(screenWidth, screenheight, "raylib [core] example - basic window")
 
-	rl.SetTargetFPS(60)
-
-	for !rl.WindowShouldClose() {
+	for running {
 		input()
 		update()
 		render()
 	}
-	rl.CloseWindow()
+	quit()
 }
